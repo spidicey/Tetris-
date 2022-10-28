@@ -219,7 +219,6 @@ def get_piece():
 def convert_shape_format(shape):
     positions = []
     format = shape.shape[shape.rotation % len(shape.shape)]
-    print(format)
     for i, line in enumerate(format):
         row = list(line)
         for j, col in enumerate(row):
@@ -248,13 +247,18 @@ def draw_grid(surface, col, row):
             pygame.draw.line(surface, WHITE, (X_PS, Y_PS + j * PIXEL), (X_PS + PS_WIDTH - 4, Y_PS + j * PIXEL), width=1)
 
 
-def draw_next_shape(grid):
+def draw_next_shape(surface,grid,next_piece):
     pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_NEXT, Y_NEXT, NEXT_WIDTH, NEXT_HEIGHT),
                      width=3)
     textsurface = pygame.font.SysFont('consolas', 17).render(f'Next Piece', False, (255, 255, 255))
     screen.blit(textsurface, (
-        (X_NEXT+ NEXT_WIDTH) // 2 - textsurface.get_width() // 2, Y_NEXT))
-
+        (X_NEXT+ X_NEXT+NEXT_WIDTH) // 2 - textsurface.get_width() // 2, Y_NEXT+20))
+    format = next_piece.shape[0]
+    for i, line in enumerate(format):
+        row = list(line)
+        for j,col in enumerate(row):
+            if col == 'O':
+                pygame.draw.rect(surface,next_piece.color,(((X_NEXT+X_NEXT+NEXT_WIDTH)//2-60)+j*PIXEL,Y_NEXT+40+i*PIXEL,PIXEL,PIXEL))
 
 def flash():
     for _ in range(5):
@@ -267,6 +271,14 @@ def flash():
     pygame.time.wait(2000)
     UI()
     pygame.time.wait(2000)
+
+
+def draw_game(screen, grid):
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            pygame.draw.rect(screen, grid[i][j], (X_PS + j * PIXEL, Y_PS + i * PIXEL, PIXEL, PIXEL), 0)
+            # if grid[i][j]!=(0,0,0):
+            #     screen.blit(current_piece.pixel,(x_ps+j*pixel,y_ps+i*pixel))
 
 
 if __name__ == "__main__":
@@ -290,12 +302,16 @@ if __name__ == "__main__":
         grid = create_grid(locked_pos)
         fall_time += clock.get_rawtime()
         clock.tick()
+        moving_left=False
+        moving_right=False
+        moving_down=False
         if fall_time / 1000 >= fall_speed:
             fall_time = 0
             current_piece.y += 1
             if not (is_valid(grid, current_piece)) and current_piece.y > 0:
                 current_piece.y -= 1
                 change_piece = True
+        key_input = pygame.key.get_pressed()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -313,11 +329,21 @@ if __name__ == "__main__":
                     if not is_valid(grid, current_piece):
                         current_piece.y -= 1
                 elif event.key == pygame.K_UP:
-                    current_piece.rotation += 1
+                    current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
                     if not is_valid(grid, current_piece):
                         current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
+                elif event.key == pygame.K_z:
+                    current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
+                    if not is_valid(grid,current_piece):
+                        current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
+                elif event.key == pygame.K_SPACE:
+                    for i in range(20):
+                        if not is_valid(grid, current_piece):
+                            current_piece.y-=1
+                            break
+                        else:
+                            current_piece.y+=1
         shape_pos = convert_shape_format(current_piece)
-        print(shape_pos)
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
             if y > -1:
@@ -330,13 +356,9 @@ if __name__ == "__main__":
             current_piece = next_piece
             next_piece = get_piece()
             change_piece = False
-        for i in range(len(grid)):
-            for j in range(len(grid[i])):
-                pygame.draw.rect(screen, grid[i][j], (X_PS + j * PIXEL, Y_PS + i * PIXEL, PIXEL, PIXEL), 0)
-                # if grid[i][j]!=(0,0,0):
-                #     screen.blit(current_piece.pixel,(x_ps+j*pixel,y_ps+i*pixel))
+        draw_game(screen,grid)
         # screen.blit(bg,(0,0))
-        draw_next_shape(grid)
+        draw_next_shape(screen,grid,next_piece)
         draw_grid(screen, 10, 20)
         UI()
         pygame.display.flip()
