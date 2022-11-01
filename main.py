@@ -1,12 +1,18 @@
 import random
 import time
-import pygame, sys
+
+import pygame
 import pygame.color
-from dataclasses import dataclass
+import sys
 
+# Pygame setup
+pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.init()
+pygame.mixer.init()
+KEY_DELAY = 200
+KEY_INTERVAL = 50
+pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
 # Global variable
-
 SCORE = 0
 LEVEL = 1
 S_WIDTH = 900
@@ -16,9 +22,9 @@ BOARD_HEIGHT = 20
 BLANK = '.'
 X_PS, Y_PS, PS_WIDTH, PS_HEIGHT = 300, 100, 280, 560  # play screen width, height
 X_LINE, Y_LINE, LINE_WIDTH, LINE_HEIGHT = 300, 30, 280, 50
-X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT = 600, 30, 130, 130
-X_LV, Y_LV, LV_WIDTH, LV_HEIGHT = 600, 190, 100, 30
-X_NEXT, Y_NEXT, NEXT_WIDTH, NEXT_HEIGHT = 600, 250, 200, 200
+X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT = 630, 30, 150, 150
+X_LV, Y_LV, LV_WIDTH, LV_HEIGHT = 630, 190, 100, 30
+X_NEXT, Y_NEXT, NEXT_WIDTH, NEXT_HEIGHT = 630, 250, 200, 200
 PIXEL = PS_WIDTH // BOARD_WIDTH
 
 #               R    G    B
@@ -31,7 +37,7 @@ GREEN = (0, 155, 0)
 LIGHTGREEN = (20, 175, 20)
 BLUE = (0, 0, 155)
 LIGHTBLUE = (20, 20, 175)
-YELLOW = (155, 155, 0)
+YELLOW = (255, 255, 0)
 LIGHTYELLOW = (175, 175, 20)
 ORANGE = (255, 165, 0)
 PURPLE = (191, 64, 191)
@@ -71,11 +77,10 @@ I = [['..O..',
       '.....',
       '.....']]
 
-O = [['.....',
-      '.....',
-      '.OO..',
-      '.OO..',
-      '.....']]
+O = [['....',
+      '.OO.',
+      '.OO.',
+      '....']]
 
 J = [['.....',
       '.O...',
@@ -139,17 +144,25 @@ T = [['.....',
       '.OO..',
       '..O..',
       '.....']]
-
+# Next piece
+NEXT_PIECE_IMG = pygame.transform.scale(pygame.image.load(f'images/next_piece.png'), (NEXT_WIDTH, NEXT_HEIGHT))
+# Play screen
+PLAY_SCEEN_IMG = pygame.transform.scale(pygame.image.load(f'images/play_screen.png'), (30, PS_HEIGHT + 4))
+# Score
+SCORE_IMG = pygame.transform.scale(pygame.image.load(f'images/score.png'), (SCORE_WIDTH, SCORE_HEIGHT))
+# Line
+LINE_IMG = pygame.transform.scale(pygame.image.load('images/line.png'), (LINE_WIDTH, LINE_HEIGHT))
 # Data tile
 TILE = []
-for i in range(7):
+for i in range(9):
     TILE.append(pygame.transform.scale(pygame.image.load(f'images/T_{i}.png'), (PIXEL, PIXEL)))
 
 TETROMINOS = [S, Z, J, L, I, O, T]
 tetrominos_colors = [PURPLE, ORANGE, BLUE, RED, LIGHTRED, YELLOW, GREEN]
 LOOKUP_TILE = {
-    BLACK: BLACK,
-    PURPLE: TILE[6],
+    WHITE: TILE[8],
+    BLACK: TILE[0],
+    PURPLE: TILE[7],
     ORANGE: TILE[5],
     BLUE: TILE[4],
     RED: TILE[1],
@@ -157,6 +170,9 @@ LOOKUP_TILE = {
     YELLOW: TILE[3],
     GREEN: TILE[6]
 }
+# Sound effect
+tetris = pygame.mixer.Sound('soundtrack/1-01 - Tetris!.mp3')
+clear = pygame.mixer.Sound('soundtrack/clear.wav')
 
 
 class Piece(object):
@@ -176,14 +192,16 @@ TEMPLATEWIDTH = TEMPLATEHEIGHT = 5
 
 
 def UI(line, level, socre):
-    pygame.draw.rect(screen, pygame.Color("Red"), pygame.Rect(X_PS, Y_PS, PS_WIDTH, PS_HEIGHT), width=3)
+    screen.blit(PLAY_SCEEN_IMG, (X_PS - 30, Y_PS - 4))
+    screen.blit(PLAY_SCEEN_IMG, (X_PS + PS_WIDTH, Y_PS - 4))
     ui_lines(line)
     ui_score(score)
     ui_level(level)
 
 
 def ui_lines(Lines=0):
-    pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_LINE, Y_LINE, LINE_WIDTH, LINE_HEIGHT), width=3)
+    # pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_LINE, Y_LINE, LINE_WIDTH, LINE_HEIGHT), width=3)
+    screen.blit(LINE_IMG, (X_LINE, Y_LINE))
     textsurface = pygame.font.SysFont('consolas', 17).render(f'Lines {Lines:03d}', False, (255, 255, 255))
     screen.blit(textsurface, (
         (X_LINE + X_LINE + LINE_WIDTH) // 2 - textsurface.get_width() // 2,
@@ -199,8 +217,9 @@ def ui_level(level=1):
 
 
 def ui_score(score=0):
-    pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT),
-                     width=3)
+    # pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT),
+    #                  width=3)
+    screen.blit(SCORE_IMG, (X_SCORE, Y_SCORE))
     textsurface = pygame.font.SysFont('consolas', 17).render(f'Score: {score:06d}', False, (255, 255, 255))
     screen.blit(textsurface, (
         (X_SCORE + X_SCORE + SCORE_WIDTH) // 2 - textsurface.get_width() // 2, Y_SCORE + 2 * SCORE_HEIGHT // 3))
@@ -247,17 +266,14 @@ def is_valid(grid, shape):
 
 def draw_grid(surface, col, row):
     for i in range(1, col):
-        pygame.draw.line(surface, WHITE, (X_PS + i * PIXEL, Y_PS), (X_PS + i * PIXEL, Y_PS + PS_HEIGHT - 4), width=1)
+        pygame.draw.line(surface, YELLOW, (X_PS + i * PIXEL, Y_PS), (X_PS + i * PIXEL, Y_PS + PS_HEIGHT - 4), width=0)
         for j in range(1, row):
-            pygame.draw.line(surface, WHITE, (X_PS, Y_PS + j * PIXEL), (X_PS + PS_WIDTH - 4, Y_PS + j * PIXEL), width=1)
+            pygame.draw.line(surface, YELLOW, (X_PS, Y_PS + j * PIXEL), (X_PS + PS_WIDTH - 4, Y_PS + j * PIXEL),
+                             width=0)
 
 
 def draw_next_shape(surface, grid, next_piece):
-    pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_NEXT, Y_NEXT, NEXT_WIDTH, NEXT_HEIGHT),
-                     width=3)
-    textsurface = pygame.font.SysFont('consolas', 17).render(f'Next Piece', False, (255, 255, 255))
-    screen.blit(textsurface, (
-        (X_NEXT + X_NEXT + NEXT_WIDTH) // 2 - textsurface.get_width() // 2, Y_NEXT + 20))
+    surface.blit(NEXT_PIECE_IMG, (X_NEXT, Y_NEXT))
     format = next_piece.shape[0]
     for i, line in enumerate(format):
         row = list(line)
@@ -267,26 +283,13 @@ def draw_next_shape(surface, grid, next_piece):
             if col == 'O':
                 # pygame.draw.rect(surface, next_piece.color, (
                 #     ((X_NEXT + X_NEXT + NEXT_WIDTH) // 2 - 60) + j * PIXEL, Y_NEXT + 40 + i * PIXEL, PIXEL, PIXEL))
-                screen.blit(tile,(
-                    ((X_NEXT + X_NEXT + NEXT_WIDTH) // 2 - 60) + j * PIXEL, Y_NEXT + 40 + i * PIXEL))
-
-
-def flash():
-    for _ in range(5):
-        screen.fill(BLACK)
-        pygame.display.flip()
-        pygame.time.wait(10)
-        screen.fill(WHITE)
-        pygame.display.flip()
-        pygame.time.wait(10)
-    pygame.time.wait(2000)
-    UI()
-    pygame.time.wait(2000)
+                screen.blit(tile, (
+                    ((X_NEXT + X_NEXT + NEXT_WIDTH) // 2 - 70) + j * PIXEL, Y_NEXT + 45 + i * PIXEL))
 
 
 def clear_rows(grid, locked):
     # need to see if row is clear the shift every other row above down one
-
+    index = []
     inc = 0
     for i in range(len(grid) - 1, -1, -1):
         row = grid[i]
@@ -294,6 +297,7 @@ def clear_rows(grid, locked):
             inc += 1
             # add positions to remove from locked
             ind = i
+            index.append(ind)
             for j in range(len(row)):
                 try:
                     del locked[(j, i)]
@@ -305,6 +309,10 @@ def clear_rows(grid, locked):
             if y < ind:
                 newKey = (x, y + inc)
                 locked[newKey] = locked.pop(key)
+    if inc == 4:
+        pygame.mixer.Sound.play(tetris)
+    elif inc > 0:
+        pygame.mixer.Sound.play(clear)
     return inc
 
 
@@ -319,7 +327,7 @@ def draw_game(screen, grid):
             color = grid[i][j]
             tile = LOOKUP_TILE[color]
             if grid[i][j] == (0, 0, 0):
-                screen.blit(TILE[0], (X_PS + j * PIXEL, Y_PS + i * PIXEL))
+                pygame.draw.rect(screen, YELLOW, (X_PS + j * PIXEL, Y_PS + i * PIXEL, PIXEL, PIXEL), 0)
             else:
                 screen.blit(tile, (X_PS + j * PIXEL, Y_PS + i * PIXEL))
 
@@ -330,8 +338,7 @@ if __name__ == "__main__":
     title = pygame.display.set_caption("Tetris")
     icon = pygame.image.load("images/Tetris.png")
     pygame.display.set_icon(icon)
-    bg = pygame.transform.scale(pygame.image.load("images/start.gif"), (S_HEIGHT, S_WIDTH))
-
+    bg = pygame.transform.scale(pygame.image.load("images/olga-buiilova-9.jpg"), (S_WIDTH, S_HEIGHT))
     locked_pos = {}
     grid = create_grid(locked_pos)
     change_piece = False
@@ -343,8 +350,11 @@ if __name__ == "__main__":
     line = 0
     score = 0
     level = 1
+    music = pygame.mixer.music.load("soundtrack/Tetris.mp3")
+    pygame.mixer.music.play(-1)
     while 1:
         screen.fill(BLACK)
+        screen.blit(bg, (0, 0))
         grid = create_grid(locked_pos)
         fall_time += clock.get_rawtime()
         clock.tick()
@@ -407,9 +417,10 @@ if __name__ == "__main__":
             next_piece = get_piece()
             change_piece = False
             line += clear_rows(grid, locked_pos)
-        draw_game(screen, grid)
+        # draw_game(screen, grid)
         # screen.blit(bg,(0,0))
         draw_next_shape(screen, grid, next_piece)
-        draw_grid(screen, 10, 20)
+        # draw_grid(screen, 10, 20)
         UI(line, level, score)
+        draw_game(screen, grid)
         pygame.display.flip()
