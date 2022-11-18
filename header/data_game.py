@@ -1,11 +1,11 @@
 from header.color import PURPLE, ORANGE, BLUE, RED, LIGHTRED, YELLOW, GREEN, WHITE, BLACK
 from header.tetrominos import S, Z, J, L, I, O, T
-from header.coordinate import PIXEL
+from header.coordinate import PIXEL, LEVEL_SELECT_WIDTH, LEVEL_SELECT_HEIGHT
 import pygame
 # Data tile
-SPRITES = []
-for i in range(9):
-    SPRITES.append(pygame.transform.scale(pygame.image.load(f'images/T_{i}.png'), (PIXEL, PIXEL)))
+SPRITES = [pygame.transform.scale(pygame.image.load(f'images/T_{i}.png'), (PIXEL, PIXEL)) for i in range(9)]
+# for i in range(9):
+    # SPRITES.append(pygame.transform.scale(pygame.image.load(f'images/T_{i}.png'), (PIXEL, PIXEL)))
 TETROMINOS = [S, Z, J, L, I, O, T]
 tetrominos_colors = [PURPLE, ORANGE, BLUE, RED, LIGHTRED, YELLOW, GREEN]
 LOOKUP_TILE = {
@@ -19,3 +19,4 @@ LOOKUP_TILE = {
     YELLOW: SPRITES[3],
     GREEN: SPRITES[6]
 }
+LEVEL_SPRITE=[pygame.transform.scale(pygame.image.load(f'images/level_{i}.png'), (LEVEL_SELECT_WIDTH, LEVEL_SELECT_HEIGHT)) for i in range(10)]

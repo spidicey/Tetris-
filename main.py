@@ -5,10 +5,10 @@ import pygame
 from header.Piece import Piece
 from header.color import WHITE, BLACK, YELLOW
 from header.coordinate import *
-from header.data_game import TETROMINOS, LOOKUP_TILE
+from header.data_game import TETROMINOS, LOOKUP_TILE, LEVEL_SPRITE
 # from header.coordinate import S_WIDTH, S_HEIGHT, PIXEL
 from header.delay import KEY_DELAY, KEY_INTERVAL
-from header.loaded_image import START_SCREEB_IMG, NEXT_PIECE_IMG, PLAY_SCEEN_IMG, SCORE_IMG
+from header.loaded_image import START_SCREEB_IMG, NEXT_PIECE_IMG, PLAY_SCEEN_IMG, SCORE_IMG, LEVEL_IMG
 from header.scoring import SCORE_CLEAR_LINE_LOOKUP
 # from header.a import TETRIS_SFX, CLEAR_SFX, ROTATION_SFX, GAME_OVER_SFX, SAMPLE_SFX
 from header.tetrominos import S, Z, I, O, J, L, T
@@ -20,7 +20,7 @@ pygame.mixer.init()
 pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
 # Global variable
 SCORE = 0
-LEVEL = 1
+LEVEL = 0
 
 # Statictis
 STATISTICS = {
@@ -213,8 +213,10 @@ def clear_rows(grid, locked):
 
 
 def clear_row_effect(grid, ind, index):
+    draw_game(grid, LEVEL, next_piece, score, screen, total_line)
+    # global LEVEL
     for _ in range(3):
-        draw_game(grid, level, next_piece, score, screen, total_line)
+        draw_game(grid, LEVEL, next_piece, score, screen, total_line)
         for ind in index:
             tile = LOOKUP_TILE[WHITE]
             for i in range(10):
@@ -222,7 +224,7 @@ def clear_row_effect(grid, ind, index):
             pygame.display.update()
             # draw_game(grid, level, next_piece, score, screen, total_line)
         pygame.time.delay(150)
-        draw_game(grid, level, next_piece, score, screen, total_line)
+        draw_game(grid, LEVEL, next_piece, score, screen, total_line)
         pygame.display.update()
         pygame.time.delay(150)
         pygame.display.update()
@@ -277,8 +279,8 @@ def pause_game():
     pygame.display.flip()
 
 
-def run_game():
-    global screen, current_piece, level, next_piece, score, total_line, grid, last_k
+def run_game(level):
+    global screen, current_piece, next_piece, score, total_line, grid, last_k
     space_freq = 0.8
     last_k = time.time()
     screen.fill(BLACK)
@@ -291,10 +293,9 @@ def run_game():
     STATISTICS[TETROMINOS.index(current_piece.shape)] += 1
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 0.15 # formula fallspeed = 1 - level * 0.1
+    fall_speed = 1 - LEVEL * 0.1  # formula fallspeed = 1 - level * 0.1
     total_line = 0
     score = 0
-    level = 9
     music = pygame.mixer.music.load("soundtrack/Tetris.mp3")
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.1)
@@ -411,25 +412,73 @@ def run_game():
     game_over()
 
 
+class Menu:
+    index = 0
+    row = 0
+    col = 0
+    def __int__(self):
+        self.index=0
+        self.row=0
+        self.col=0
+def menu():
+    global LEVEL
+    screen.blit(LEVEL_IMG, (0, 0))
+    pygame.draw.rect(screen,WHITE,pygame.Rect(172+(menu_manage.col*60),242+(menu_manage.row*50),50,40))
+    screen.blit(LEVEL_SPRITE[LEVEL],(172+(menu_manage.col*60),242+(menu_manage.row*50)))
+    pygame.display.flip()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                menu_manage.row -=1
+                LEVEL-=5
+                if menu_manage.row < 0:
+                    menu_manage.row += 1
+                    LEVEL += 5
+            elif event.key == pygame.K_DOWN:
+                menu_manage.row += 1
+                LEVEL+=5
+                if menu_manage.row > 1:
+                    menu_manage.row -= 1
+                    LEVEL -= 5
+            elif event.key == pygame.K_LEFT:
+                menu_manage.col -=1
+                LEVEL-=1
+                if menu_manage.col<0:
+                    menu_manage.col+=1
+                    LEVEL+=1
+            elif event.key == pygame.K_RIGHT:
+                menu_manage.col += 1
+                LEVEL += 1
+                if menu_manage.col > 4:
+                    menu_manage.col -= 1
+                    LEVEL-=1
+            elif event.key == pygame.K_RETURN:
+                run_game(LEVEL)
+
 def draw_game(grid, level, next_piece, score, screen, total_line):
     draw_next_shape(screen, next_piece)
     UI(total_line, level, score)
     draw_play_screen(screen, grid)
     draw_statistic(STATISTICS)
 
+
 screen = pygame.display.set_mode((S_WIDTH, S_HEIGHT))
 screen.fill(WHITE)
 title = pygame.display.set_caption("Tetris")
 icon = pygame.image.load("images/Tetris.png")
 pygame.display.set_icon(icon)
+menu_manage = Menu()
 if __name__ == "__main__":
     while 1:
-        screen.fill(BLACK)
         screen.blit(START_SCREEB_IMG, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-            if event.type== pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    run_game()
+            if event.type == pygame.KEYDOWN:
+                while 1:
+                    menu()
+
+
         pygame.display.flip()
