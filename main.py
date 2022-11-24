@@ -2,16 +2,16 @@ import random
 import sys
 import time
 import pygame
-from header.Piece import Piece
-from header.color import WHITE, BLACK, YELLOW
-from header.coordinate import *
-from header.data_game import TETROMINOS, LOOKUP_TILE, LEVEL_SPRITE
-# from header.coordinate import S_WIDTH, S_HEIGHT, PIXEL
-from header.delay import KEY_DELAY, KEY_INTERVAL
-from header.loaded_image import START_SCREEB_IMG, NEXT_PIECE_IMG, PLAY_SCEEN_IMG, SCORE_IMG, LEVEL_IMG
-from header.scoring import SCORE_CLEAR_LINE_LOOKUP
-# from header.a import TETRIS_SFX, CLEAR_SFX, ROTATION_SFX, GAME_OVER_SFX, SAMPLE_SFX
-from header.tetrominos import S, Z, I, O, J, L, T
+from Header.Piece import Piece
+from Header.color import *
+from Header.coordinate import *
+from Header.data_game import TETROMINOS, LOOKUP_TILE, LEVEL_SPRITE
+# from Header.coordinate import S_WIDTH, S_HEIGHT, PIXEL
+from Header.delay import KEY_DELAY, KEY_INTERVAL
+from Header.loaded_image import START_SCREEB_IMG, NEXT_PIECE_IMG, PLAY_SCEEN_IMG, SCORE_IMG, LEVEL_IMG
+from Header.scoring import SCORE_CLEAR_LINE_LOOKUP
+from Header.tetrominos import S, Z, I, O, J, L, T
+from Header.music import TETRIS_ST, CLEAR_SFX, ROTATION_SFX, GAME_OVER_SFX, SAMPLE_SFX,LONGINSKA_ST,BRANDISKY_ST,KALINKA_ST,TROIKA_ST,KOROBEINIKI
 
 # Pygame setup
 pygame.mixer.pre_init(44100, -16, 2, 2048)
@@ -33,17 +33,10 @@ STATISTICS = {
     TETROMINOS.index(T): 0
 }
 # Font
-FONT_PATH = 'font/ARCADECLASSIC.TTF'
+FONT_PATH = 'font/PixelEmulator-xq08.ttf'
 # Sound effect
-TETRIS_SFX = pygame.mixer.Sound('soundtrack/Tetris!.mp3')
-CLEAR_SFX = pygame.mixer.Sound('soundtrack/clear.wav')
-ROTATION_SFX = pygame.mixer.Sound('soundtrack/rotation sfx.wav')
-GAME_OVER_SFX = pygame.mixer.Sound('soundtrack/Game Over.mp3')
-SAMPLE_SFX = pygame.mixer.Sound('soundtrack/sfx_point.wav')
 SAMPLE_SFX.set_volume(1.0)
 ROTATION_SFX.set_volume(1.0)
-
-TEMPLATEWIDTH = TEMPLATEHEIGHT = 5
 
 
 def UI(line, level, score):
@@ -57,7 +50,7 @@ def UI(line, level, score):
 def draw_lines(Lines=0):
     pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_LINE, Y_LINE, LINE_WIDTH, LINE_HEIGHT), width=3)
     # screen.blit(LINE_IMG, (X_LINE, Y_LINE))
-    textsurface = pygame.font.SysFont(FONT_PATH, 30, bold=True).render(f'Lines {Lines:03d}', False, (255, 255, 255))
+    textsurface = pygame.font.Font(FONT_PATH, 30, bold=True).render(f'Lines {Lines:03d}', False, (255, 255, 255))
     screen.blit(textsurface, (
         (X_LINE + X_LINE + LINE_WIDTH) // 2 - textsurface.get_width() // 2,
         (Y_LINE + Y_LINE + LINE_HEIGHT) // 2 - textsurface.get_height() // 2))
@@ -65,7 +58,7 @@ def draw_lines(Lines=0):
 
 def draw_level(level=1):
     pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_LV, Y_LV, LV_WIDTH, LV_HEIGHT), width=3)
-    textsurface = pygame.font.SysFont(FONT_PATH, 30, bold=True).render(f'Level {level:02d}', False, (255, 255, 255))
+    textsurface = pygame.font.Font(FONT_PATH, 15, bold=True).render(f'Level {level:02d}', False, (255, 255, 255))
     screen.blit(textsurface, (
         (X_LV + X_LV + LV_WIDTH) // 2 - textsurface.get_width() // 2,
         (Y_LV + Y_LV + LV_HEIGHT) // 2 - textsurface.get_height() // 2))
@@ -75,7 +68,8 @@ def draw_score(score=0):
     # pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT),
     #                  width=3)
     screen.blit(SCORE_IMG, (X_SCORE, Y_SCORE))
-    textsurface = pygame.font.SysFont(FONT_PATH, 25, bold=True).render(f'Score: {score:06d}', False, (255, 255, 255))
+    textsurface = pygame.font.Font(FONT_PATH, 15, bold=True).render(f'Score: {score:06d}', False, (255, 255, 255))
+
     screen.blit(textsurface, (
         (X_SCORE + X_SCORE + SCORE_WIDTH) // 2 - textsurface.get_width() // 2, Y_SCORE + 2 * SCORE_HEIGHT // 3))
 
@@ -155,8 +149,10 @@ def draw_next_shape(surface, next_piece):
                     ((X_NEXT + X_NEXT + NEXT_WIDTH) // 2 - 70) + j * PIXEL, Y_NEXT + 45 + i * PIXEL))
 
 
-def draw_text(font, size, text):
-    pass
+def draw_text(size, text, x, y, color):
+    textsurface = pygame.font.Font(FONT_PATH, 30, bold=True).render(text, False, color)
+    screen.blit(textsurface, (x - textsurface.get_width() // 2,
+                              y - textsurface.get_height() // 2))
 
 
 def draw_statistic(STATISTIC):
@@ -164,7 +160,7 @@ def draw_statistic(STATISTIC):
     # screen.blit(STATISTICS_IMG, (X_STA, Y_STA))
     for ind, tetromino in enumerate(TETROMINOS):
         draw_shape(Piece(0, 0, tetromino), (X_STA + X_STA + STA_WIDTH) // 3 - 70, Y_STA - 15 + ind * 80)
-        textsurface = pygame.font.SysFont(FONT_PATH, 45, bold=True).render(f'{STATISTIC[ind]:03d}', False, BLACK)
+        textsurface = pygame.font.Font(FONT_PATH, 30, bold=True).render(f'{STATISTIC[ind]:03d}', False, BLACK)
         screen.blit(textsurface, ((X_STA + X_STA + STA_WIDTH) * 2 / 3, Y_STA + 36 + ind * 80))
 
     # draw_shape(Piece(0, 0, T),(X_STA + X_STA + STA_WIDTH) // 3 -70,Y_STA)
@@ -190,11 +186,11 @@ def clear_rows(grid, locked):
                     del locked[(j, i)]
                 except:
                     continue
-    for ind in index:
-        tile = LOOKUP_TILE[WHITE]
-        for i in range(10):
-            screen.blit(tile, (X_PS + i * PIXEL, Y_PS + ind * PIXEL))
-        pygame.display.update()
+    # for ind in index:
+    #     tile = LOOKUP_TILE[WHITE]
+    #     for i in range(10):
+    #         screen.blit(tile, (X_PS + i * PIXEL, Y_PS + ind * PIXEL))
+    #     pygame.display.update()
 
     if flag_ef:
         clear_row_sfx(inc)
@@ -213,8 +209,9 @@ def clear_rows(grid, locked):
 
 
 def clear_row_effect(grid, ind, index):
-    draw_game(grid, LEVEL, next_piece, score, screen, total_line)
+    # draw_game(grid, LEVEL, next_piece, score, screen, total_line)
     # global LEVEL
+    pygame.key.set_repeat(1000000, 10000)
     for _ in range(3):
         draw_game(grid, LEVEL, next_piece, score, screen, total_line)
         for ind in index:
@@ -228,11 +225,11 @@ def clear_row_effect(grid, ind, index):
         pygame.display.update()
         pygame.time.delay(150)
         pygame.display.update()
-
+    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
 
 def clear_row_sfx(inc):
     if inc == 4:
-        pygame.mixer.Sound.play(TETRIS_SFX)
+        pygame.mixer.Sound.play(TETRIS_ST)
     elif inc > 0:
         pygame.mixer.Sound.play(CLEAR_SFX)
 
@@ -240,7 +237,7 @@ def clear_row_sfx(inc):
 def check_lost(positions):
     for pos in positions:
         x, y = pos
-        if y < 1:
+        if y < 0:
             return True
     return False
 
@@ -262,18 +259,41 @@ def draw_play_screen(screen, grid):
 
 
 def game_over():
-    textsurface = pygame.font.SysFont(FONT_PATH, 45, bold=True).render(f'GAME OVER', False, WHITE)
+    global STATISTICS, level_menu, music_menu
+    textsurface = pygame.font.Font(FONT_PATH, 30, bold=True).render(f'GAME OVER', False, WHITE)
     screen.blit(textsurface, ((X_PS + X_PS + PS_WIDTH) // 2 - textsurface.get_width() // 2,
                               (Y_PS + Y_PS + PS_HEIGHT) // 2 - textsurface.get_height() // 2))
-    pygame.mixer.music.stop()
+    pygame.mixer.music.unload()
     GAME_OVER_SFX.play()
     pygame.display.flip()
-    pygame.time.delay(5000)
+    # pygame.time.delay(5000)
+    flag = False
+    while 1:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_RETURN:
+                    flag = True
+                    break
+        if flag:
+            break
+    STATISTICS = {
+        TETROMINOS.index(S): 0,
+        TETROMINOS.index(Z): 0,
+        TETROMINOS.index(J): 0,
+        TETROMINOS.index(L): 0,
+        TETROMINOS.index(I): 0,
+        TETROMINOS.index(O): 0,
+        TETROMINOS.index(T): 0
+    }
+    level_menu = True
+    music_menu = False
 
 
 def pause_game():
-    draw_game(grid, level, next_piece, score, screen, total_line)
-    textsurface = pygame.font.SysFont(FONT_PATH, 45, bold=True).render(f'PAUSE', False, WHITE)
+    draw_game(grid, LEVEL, next_piece, score, screen, total_line)
+    textsurface = pygame.font.Font(FONT_PATH, 30, bold=True).render(f'PAUSE', False, WHITE)
     screen.blit(textsurface, ((X_PS + X_PS + PS_WIDTH) // 2 - textsurface.get_width() // 2,
                               (Y_PS + Y_PS + PS_HEIGHT) // 2 - textsurface.get_height() // 2))
     pygame.display.flip()
@@ -284,7 +304,7 @@ def run_game(level):
     space_freq = 0.8
     last_k = time.time()
     screen.fill(BLACK)
-    BACKGROUND_IMG = pygame.transform.scale(pygame.image.load("images/olga-buiilova-9.jpg"), (S_WIDTH, S_HEIGHT))
+    BACKGROUND_IMG = pygame.transform.scale(pygame.image.load("Images/olga-buiilova-9.jpg"), (S_WIDTH, S_HEIGHT))
     locked_pos = {}
     grid = create_grid(locked_pos)
     change_piece = False
@@ -296,9 +316,10 @@ def run_game(level):
     fall_speed = 1 - LEVEL * 0.1  # formula fallspeed = 1 - level * 0.1
     total_line = 0
     score = 0
-    music = pygame.mixer.music.load("soundtrack/Tetris.mp3")
+    pygame.mixer.music.load(SOUNDTRACK_CHOICE[music_choice])
     pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(0.1)
+    pygame.mixer.music.set_volume(0.5)
+    lastFallTime = time.time()
     run_game = True
     while run_game:
         screen.fill(BLACK)
@@ -307,11 +328,17 @@ def run_game(level):
         fall_time += clock.get_rawtime()
         clock.tick()
         last_move_sideways_time = time.time()
-        lastFallTime = time.time()
         moves_speed = 0.27
         line_clear = 0
-        if fall_time / 1000 >= fall_speed:
-            fall_time = 0
+        # if fall_time / 1000 >= fall_speed:
+        #     fall_time = 0
+        #     current_piece.y += 1
+        #     if not (is_valid(grid, current_piece)) and current_piece.y > 0:
+        #         score += 10
+        #         current_piece.y -= 1
+        #         change_piece = True
+        if time.time() - lastFallTime > fall_speed:
+            lastFallTime = time.time()
             current_piece.y += 1
             if not (is_valid(grid, current_piece)) and current_piece.y > 0:
                 score += 10
@@ -322,36 +349,31 @@ def run_game(level):
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
+                if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and change_piece == False:
                     current_piece.x -= 1
                     if not is_valid(grid, current_piece):
                         current_piece.x += 1
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif event.key == pygame.K_RIGHT:
-                    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
+                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and change_piece == False:
                     current_piece.x += 1
                     if not is_valid(grid, current_piece):
                         current_piece.x -= 1
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif event.key == pygame.K_DOWN:
-                    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
+                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and change_piece == False:
                     current_piece.y += 1
                     if not is_valid(grid, current_piece):
                         current_piece.y -= 1
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif event.key == pygame.K_UP:
-                    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
+                elif (event.key == pygame.K_UP or event.key == pygame.K_w) and change_piece == False:
                     current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
                     if not is_valid(grid, current_piece):
                         current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif event.key == pygame.K_z:
-                    pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
+                elif event.key == pygame.K_z and change_piece == False:
                     current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
                     if not is_valid(grid, current_piece):
                         current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
@@ -401,8 +423,7 @@ def run_game(level):
             next_piece = get_piece()
             change_piece = False
             line_clear += clear_rows(grid, locked_pos)
-            # if line_clear>0:
-            #     last_k=
+            lastFallTime = time.time()
             total_line += line_clear
         score += SCORE_CLEAR_LINE_LOOKUP[line_clear] * (level + 1)
         draw_game(grid, level, next_piece, score, screen, total_line)
@@ -410,52 +431,109 @@ def run_game(level):
         if check_lost(locked_pos):
             run_game = False
     game_over()
+    print(locked_pos)
 
 
 class Menu:
     index = 0
     row = 0
     col = 0
+
     def __int__(self):
-        self.index=0
-        self.row=0
-        self.col=0
+        self.index = 0
+        self.row = 0
+        self.col = 0
+
+
+level_menu = True
+music_menu = False
+
+
 def menu():
-    global LEVEL
+    global LEVEL, level_menu, music_menu,music_choice
     screen.blit(LEVEL_IMG, (0, 0))
-    pygame.draw.rect(screen,WHITE,pygame.Rect(172+(menu_manage.col*60),242+(menu_manage.row*50),50,40))
-    screen.blit(LEVEL_SPRITE[LEVEL],(172+(menu_manage.col*60),242+(menu_manage.row*50)))
+    screen.blit(LEVEL_SPRITE[LEVEL], (172 + (level_select.col * 60), 242 + (level_select.row * 52)))
+    draw_music_select(BLUE, music_select.row)
+    if music_menu:
+        if music_choice != music_select.row:
+            music_choice=music_select.row
+            pygame.mixer.music.unload()
+            pygame.mixer.music.load(SOUNDTRACK_CHOICE[music_select.row])
+            pygame.mixer.music.play(-1)
     pygame.display.flip()
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                menu_manage.row -=1
-                LEVEL-=5
-                if menu_manage.row < 0:
-                    menu_manage.row += 1
-                    LEVEL += 5
-            elif event.key == pygame.K_DOWN:
-                menu_manage.row += 1
-                LEVEL+=5
-                if menu_manage.row > 1:
-                    menu_manage.row -= 1
+    if level_menu == True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_UP:
+                    level_select.row -= 1
                     LEVEL -= 5
-            elif event.key == pygame.K_LEFT:
-                menu_manage.col -=1
-                LEVEL-=1
-                if menu_manage.col<0:
-                    menu_manage.col+=1
-                    LEVEL+=1
-            elif event.key == pygame.K_RIGHT:
-                menu_manage.col += 1
-                LEVEL += 1
-                if menu_manage.col > 4:
-                    menu_manage.col -= 1
-                    LEVEL-=1
-            elif event.key == pygame.K_RETURN:
-                run_game(LEVEL)
+                    if level_select.row < 0:
+                        level_select.row += 1
+                        LEVEL += 5
+                    ROTATION_SFX.play()
+                elif event.key == pygame.K_DOWN:
+                    level_select.row += 1
+                    LEVEL += 5
+                    if level_select.row > 1:
+                        level_select.row -= 1
+                        LEVEL -= 5
+                    ROTATION_SFX.play()
+                elif event.key == pygame.K_LEFT:
+                    level_select.col -= 1
+                    LEVEL -= 1
+                    if level_select.col < 0:
+                        level_select.col += 1
+                        LEVEL += 1
+                    ROTATION_SFX.play()
+                elif event.key == pygame.K_RIGHT:
+                    level_select.col += 1
+                    LEVEL += 1
+                    if level_select.col > 4:
+                        level_select.col -= 1
+                        LEVEL -= 1
+                    ROTATION_SFX.play()
+                elif event.key == pygame.K_RETURN:
+                    # run_game(LEVEL)
+                    music_menu = True
+                    level_menu = False
+    if music_menu == True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_UP:
+                    music_select.row = (music_select.row - 1) if (music_select.row - 1) >= 0 else music_select.row
+                elif event.key == pygame.K_DOWN:
+                    music_select.row = (music_select.row + 1) if (music_select.row + 1) < len(
+                        SOUNDTRACK_CHOICE) else music_select.row
+                elif event.key == pygame.K_RETURN:
+                    run_game(LEVEL)
+
+
+SOUNDTRACK_CHOICE = {
+    0:LONGINSKA_ST,
+    1:BRANDISKY_ST,
+    2:KALINKA_ST,
+    3:TROIKA_ST,
+    4:KOROBEINIKI,
+}
+
+SOUNDTRACK_NAME=["LOGINSKA","BRANDINSKY","KALINKA","TROIKA","KOROBEINIKI"]
+music_choice=-1
+def draw_music_select(color, current):
+    row = 0
+    draw_text(20, "MUSIC", S_WIDTH // 2, int(S_HEIGHT * (2 / 3)) - 60, WHITE)
+    for music in SOUNDTRACK_NAME:
+        if row == current:
+            screen.blit(pygame.font.Font(FONT_PATH, 30, bold=True).render("->", False, color),
+                        (280, int(S_HEIGHT * (2 / 3)) + row * 30 - 20))
+            draw_text(20, music, S_WIDTH // 2, int(S_HEIGHT * (2 / 3)) + row * 30, color)
+        else:
+            draw_text(20, music, S_WIDTH // 2, int(S_HEIGHT * (2 / 3)) + row * 30, WHITE)
+        row += 1
+
 
 def draw_game(grid, level, next_piece, score, screen, total_line):
     draw_next_shape(screen, next_piece)
@@ -467,18 +545,18 @@ def draw_game(grid, level, next_piece, score, screen, total_line):
 screen = pygame.display.set_mode((S_WIDTH, S_HEIGHT))
 screen.fill(WHITE)
 title = pygame.display.set_caption("Tetris")
-icon = pygame.image.load("images/Tetris.png")
+icon = pygame.image.load("Images/Tetris.png")
 pygame.display.set_icon(icon)
-menu_manage = Menu()
+level_select = Menu()
+music_select = Menu()
 if __name__ == "__main__":
     while 1:
         screen.blit(START_SCREEB_IMG, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-            if event.type == pygame.KEYDOWN:
+            if event.type == pygame.KEYUP:
                 while 1:
                     menu()
-
 
         pygame.display.flip()

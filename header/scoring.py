@@ -1,8 +1,0 @@
-SCORE_CLEAR_LINE_LOOKUP = {  # ALL AT LEVEL 0       FORMULA = SCORE_LOOKUP[LINE_CLEAR] * (LEVEL+1)
-    0: 0,
-    1: 40,
-    2: 100,
-    3: 300,
-    4: 1200
-}
-
