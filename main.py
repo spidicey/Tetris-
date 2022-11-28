@@ -11,7 +11,9 @@ from Header.delay import KEY_DELAY, KEY_INTERVAL
 from Header.loaded_image import START_SCREEB_IMG, NEXT_PIECE_IMG, PLAY_SCEEN_IMG, SCORE_IMG, LEVEL_IMG
 from Header.scoring import SCORE_CLEAR_LINE_LOOKUP
 from Header.tetrominos import S, Z, I, O, J, L, T
-from Header.music import TETRIS_ST, CLEAR_SFX, ROTATION_SFX, GAME_OVER_SFX, SAMPLE_SFX,LONGINSKA_ST,BRANDISKY_ST,KALINKA_ST,TROIKA_ST,KOROBEINIKI
+from Header.music import TETRIS_ST, CLEAR_SFX, ROTATION_SFX, GAME_OVER_SFX, SAMPLE_SFX, NEXT_LEVEL, LONGINSKA_ST, \
+    BRANDISKY_ST, \
+    KALINKA_ST, TROIKA_ST, KOROBEINIKI
 
 # Pygame setup
 pygame.mixer.pre_init(44100, -16, 2, 2048)
@@ -32,6 +34,7 @@ STATISTICS = {
     TETROMINOS.index(O): 0,
     TETROMINOS.index(T): 0
 }
+# LEVELUP_REQUIMERNT
 # Font
 FONT_PATH = 'font/PixelEmulator-xq08.ttf'
 # Sound effect
@@ -39,39 +42,40 @@ SAMPLE_SFX.set_volume(1.0)
 ROTATION_SFX.set_volume(1.0)
 
 
-def UI(line, level, score):
-    screen.blit(PLAY_SCEEN_IMG, (X_PS - 30, Y_PS - 4))
-    screen.blit(PLAY_SCEEN_IMG, (X_PS + PS_WIDTH, Y_PS - 4))
-    draw_lines(line)
-    draw_score(score)
-    draw_level(level)
+def UI(surface,line, level, score):
+    surface.blit(PLAY_SCEEN_IMG, (X_PS - 30, Y_PS - 4))
+    surface.blit(PLAY_SCEEN_IMG, (X_PS + PS_WIDTH, Y_PS - 4))
+    draw_lines(surface,line)
+    draw_score(surface,score)
+    draw_level(surface,level)
 
 
-def draw_lines(Lines=0):
+def draw_lines(surface,Lines=0):
     pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_LINE, Y_LINE, LINE_WIDTH, LINE_HEIGHT), width=3)
     # screen.blit(LINE_IMG, (X_LINE, Y_LINE))
     textsurface = pygame.font.Font(FONT_PATH, 30, bold=True).render(f'Lines {Lines:03d}', False, (255, 255, 255))
-    screen.blit(textsurface, (
+    surface.blit(textsurface, (
         (X_LINE + X_LINE + LINE_WIDTH) // 2 - textsurface.get_width() // 2,
         (Y_LINE + Y_LINE + LINE_HEIGHT) // 2 - textsurface.get_height() // 2))
 
 
-def draw_level(level=1):
+def draw_level(surface,level=1):
     pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_LV, Y_LV, LV_WIDTH, LV_HEIGHT), width=3)
     textsurface = pygame.font.Font(FONT_PATH, 15, bold=True).render(f'Level {level:02d}', False, (255, 255, 255))
-    screen.blit(textsurface, (
+    surface.blit(textsurface, (
         (X_LV + X_LV + LV_WIDTH) // 2 - textsurface.get_width() // 2,
         (Y_LV + Y_LV + LV_HEIGHT) // 2 - textsurface.get_height() // 2))
 
 
-def draw_score(score=0):
-    # pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT),
-    #                  width=3)
-    screen.blit(SCORE_IMG, (X_SCORE, Y_SCORE))
+def draw_score(surface,score=0):
+    pygame.draw.rect(screen, pygame.Color("Green"), pygame.Rect(X_SCORE, Y_SCORE, SCORE_WIDTH, SCORE_HEIGHT),
+                     width=3)
+    # screen.blit(SCORE_IMG, (X_SCORE, Y_SCORE))
     textsurface = pygame.font.Font(FONT_PATH, 15, bold=True).render(f'Score: {score:06d}', False, (255, 255, 255))
 
-    screen.blit(textsurface, (
-        (X_SCORE + X_SCORE + SCORE_WIDTH) // 2 - textsurface.get_width() // 2, Y_SCORE + 2 * SCORE_HEIGHT // 3))
+    surface.blit(textsurface, (
+        (X_SCORE + X_SCORE + SCORE_WIDTH) // 2 - textsurface.get_width() // 2,
+        (Y_SCORE + Y_SCORE + SCORE_HEIGHT) // 2 - textsurface.get_height() // 2))
 
 
 def create_grid(locked_pos={}):
@@ -186,25 +190,24 @@ def clear_rows(grid, locked):
                     del locked[(j, i)]
                 except:
                     continue
-    # for ind in index:
-    #     tile = LOOKUP_TILE[WHITE]
-    #     for i in range(10):
-    #         screen.blit(tile, (X_PS + i * PIXEL, Y_PS + ind * PIXEL))
-    #     pygame.display.update()
-
     if flag_ef:
         clear_row_sfx(inc)
         clear_row_effect(grid, ind, index)
-        # last_k=time.time()+1
-        # else:
-        #     clear_row_sfx(inc)
 
     if inc > 0:
-        for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
-            x, y = key
-            if y < ind:
-                newKey = (x, y + inc)
-                locked[newKey] = locked.pop(key)
+        for i in sorted(index):
+            for y in range(i, -1, -1):
+                for x in range(10):
+                    key = (x, y)
+                    print(key, end=" ")
+                    if key in locked.keys():
+                        new_key = (x, y + 1)
+                        locked[new_key] = locked.pop(key)
+                    # if y < ind:
+                    #     newKey = (x, y + 1)
+                    #     locked[newKey] = locked.pop(key)
+    print(sorted(list(locked), key=lambda x: x[1], reverse=True))
+    print(sorted(index, reverse=True))
     return inc
 
 
@@ -227,6 +230,7 @@ def clear_row_effect(grid, ind, index):
         pygame.display.update()
     pygame.key.set_repeat(KEY_DELAY, KEY_INTERVAL)
 
+
 def clear_row_sfx(inc):
     if inc == 4:
         pygame.mixer.Sound.play(TETRIS_ST)
@@ -237,7 +241,7 @@ def clear_row_sfx(inc):
 def check_lost(positions):
     for pos in positions:
         x, y = pos
-        if y < 0:
+        if y < 1:
             return True
     return False
 
@@ -301,7 +305,7 @@ def pause_game():
 
 def run_game(level):
     global screen, current_piece, next_piece, score, total_line, grid, last_k
-    space_freq = 0.8
+    space_freq = 0.5
     last_k = time.time()
     screen.fill(BLACK)
     BACKGROUND_IMG = pygame.transform.scale(pygame.image.load("Images/olga-buiilova-9.jpg"), (S_WIDTH, S_HEIGHT))
@@ -313,15 +317,19 @@ def run_game(level):
     STATISTICS[TETROMINOS.index(current_piece.shape)] += 1
     clock = pygame.time.Clock()
     fall_time = 0
-    fall_speed = 1 - LEVEL * 0.1  # formula fallspeed = 1 - level * 0.1
     total_line = 0
     score = 0
-    pygame.mixer.music.load(SOUNDTRACK_CHOICE[music_choice])
-    pygame.mixer.music.play(-1)
-    pygame.mixer.music.set_volume(0.5)
+    mute = False
+    if music_choice == 5:
+        pass
+    else:
+        pygame.mixer.music.load(SOUNDTRACK_CHOICE[music_choice])
+        pygame.mixer.music.play(-1)
+        pygame.mixer.music.set_volume(0.5)
     lastFallTime = time.time()
     run_game = True
     while run_game:
+        fall_speed = 1 - level * 0.1  # formula fallspeed = 1 - level * 0.1
         screen.fill(BLACK)
         screen.blit(BACKGROUND_IMG, (0, 0))
         grid = create_grid(locked_pos)
@@ -349,37 +357,45 @@ def run_game(level):
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.KEYDOWN:
-                if (event.key == pygame.K_LEFT or event.key == pygame.K_a) and change_piece == False:
+                moving_left = (event.key == pygame.K_LEFT or event.key == pygame.K_a) and change_piece == False
+                moving_right = (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and change_piece == False
+                moving_down = (event.key == pygame.K_DOWN or event.key == pygame.K_s) and change_piece == False
+                rotate_r = (event.key == pygame.K_UP or event.key == pygame.K_w) and change_piece == False
+                rotate_l = event.key == pygame.K_z and change_piece == False
+                hard_drop = event.key == pygame.K_SPACE
+                pause = event.key == pygame.K_p
+                muted = event.key == pygame.K_m
+                if moving_left:
                     current_piece.x -= 1
                     if not is_valid(grid, current_piece):
                         current_piece.x += 1
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif (event.key == pygame.K_RIGHT or event.key == pygame.K_d) and change_piece == False:
+                elif moving_right:
                     current_piece.x += 1
                     if not is_valid(grid, current_piece):
                         current_piece.x -= 1
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif (event.key == pygame.K_DOWN or event.key == pygame.K_s) and change_piece == False:
+                elif moving_down:
                     current_piece.y += 1
                     if not is_valid(grid, current_piece):
                         current_piece.y -= 1
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif (event.key == pygame.K_UP or event.key == pygame.K_w) and change_piece == False:
+                elif rotate_r:
                     current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
                     if not is_valid(grid, current_piece):
                         current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif event.key == pygame.K_z and change_piece == False:
+                elif rotate_l:
                     current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
                     if not is_valid(grid, current_piece):
                         current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
                     else:
                         pygame.mixer.Sound.play(ROTATION_SFX)
-                elif event.key == pygame.K_SPACE:
+                elif hard_drop:
                     if (time.time() - last_k > space_freq):
                         # pygame.key.set_repeat(KEY_DELAY_SPACE, KEY_INTERVAL_SPACE)
                         last_k = time.time()
@@ -394,7 +410,7 @@ def run_game(level):
                             score += 10
                             pygame.mixer.Sound.play(SAMPLE_SFX)
 
-                elif event.key == pygame.K_p:
+                elif pause:
                     pause = True
                     while pause:
                         pause_game()
@@ -406,6 +422,14 @@ def run_game(level):
                                 if event.key == pygame.K_p:
                                     pause = False
                     pygame.mixer.music.unpause()
+                elif muted:
+                    mute = not mute
+                    if mute:
+                        pygame.mixer.music.pause()
+                    else:
+                        pygame.mixer.music.unpause()
+                elif event.key == pygame.K_ESCAPE:
+                    run_game = False
         shape_pos = convert_shape_format(current_piece)
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
@@ -425,13 +449,17 @@ def run_game(level):
             line_clear += clear_rows(grid, locked_pos)
             lastFallTime = time.time()
             total_line += line_clear
+        if total_line > (level * 10 + 10):
+            level += 1
+            NEXT_LEVEL.play()
         score += SCORE_CLEAR_LINE_LOOKUP[line_clear] * (level + 1)
         draw_game(grid, level, next_piece, score, screen, total_line)
         pygame.display.flip()
+
         if check_lost(locked_pos):
             run_game = False
+
     game_over()
-    print(locked_pos)
 
 
 class Menu:
@@ -450,16 +478,21 @@ music_menu = False
 
 
 def menu():
-    global LEVEL, level_menu, music_menu,music_choice
+    global LEVEL, level_menu, music_menu, music_choice,menu_flag
     screen.blit(LEVEL_IMG, (0, 0))
-    screen.blit(LEVEL_SPRITE[LEVEL], (172 + (level_select.col * 60), 242 + (level_select.row * 52)))
+    screen.blit(LEVEL_SPRITE[LEVEL],
+                (X_LEVEL_SELECT + (level_select.col * 58), Y_LEVEL_SELECT + (level_select.row * 52)))
     draw_music_select(BLUE, music_select.row)
     if music_menu:
         if music_choice != music_select.row:
-            music_choice=music_select.row
-            pygame.mixer.music.unload()
-            pygame.mixer.music.load(SOUNDTRACK_CHOICE[music_select.row])
-            pygame.mixer.music.play(-1)
+            if music_select.row == 5:
+                music_choice = music_select.row
+                pygame.mixer.music.unload()
+            else:
+                music_choice = music_select.row
+                pygame.mixer.music.unload()
+                pygame.mixer.music.load(SOUNDTRACK_CHOICE[music_select.row])
+                pygame.mixer.music.play(-1)
     pygame.display.flip()
     if level_menu == True:
         for event in pygame.event.get():
@@ -495,9 +528,14 @@ def menu():
                         LEVEL -= 1
                     ROTATION_SFX.play()
                 elif event.key == pygame.K_RETURN:
+                    pygame.mixer.Sound.play(ROTATION_SFX)
                     # run_game(LEVEL)
                     music_menu = True
                     level_menu = False
+                elif event.key == pygame.K_ESCAPE:
+                    menu_flag = False
+                    return
+
     if music_menu == True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -508,27 +546,33 @@ def menu():
                 elif event.key == pygame.K_DOWN:
                     music_select.row = (music_select.row + 1) if (music_select.row + 1) < len(
                         SOUNDTRACK_CHOICE) else music_select.row
+                elif event.key == pygame.K_ESCAPE:
+                    music_menu = False
+                    level_menu = True
                 elif event.key == pygame.K_RETURN:
                     run_game(LEVEL)
 
 
 SOUNDTRACK_CHOICE = {
-    0:LONGINSKA_ST,
-    1:BRANDISKY_ST,
-    2:KALINKA_ST,
-    3:TROIKA_ST,
-    4:KOROBEINIKI,
+    0: LONGINSKA_ST,
+    1: BRANDISKY_ST,
+    2: KALINKA_ST,
+    3: TROIKA_ST,
+    4: KOROBEINIKI,
+    5: None
 }
 
-SOUNDTRACK_NAME=["LOGINSKA","BRANDINSKY","KALINKA","TROIKA","KOROBEINIKI"]
-music_choice=-1
+SOUNDTRACK_NAME = ["LOGINSKA", "BRANDINSKY", "KALINKA", "TROIKA", "KOROBEINIKI", "NO MUSIC"]
+music_choice = -1
+
+
 def draw_music_select(color, current):
     row = 0
     draw_text(20, "MUSIC", S_WIDTH // 2, int(S_HEIGHT * (2 / 3)) - 60, WHITE)
     for music in SOUNDTRACK_NAME:
         if row == current:
             screen.blit(pygame.font.Font(FONT_PATH, 30, bold=True).render("->", False, color),
-                        (280, int(S_HEIGHT * (2 / 3)) + row * 30 - 20))
+                        (250, int(S_HEIGHT * (2 / 3)) + row * 30 - 20))
             draw_text(20, music, S_WIDTH // 2, int(S_HEIGHT * (2 / 3)) + row * 30, color)
         else:
             draw_text(20, music, S_WIDTH // 2, int(S_HEIGHT * (2 / 3)) + row * 30, WHITE)
@@ -537,7 +581,7 @@ def draw_music_select(color, current):
 
 def draw_game(grid, level, next_piece, score, screen, total_line):
     draw_next_shape(screen, next_piece)
-    UI(total_line, level, score)
+    UI(screen,total_line, level, score)
     draw_play_screen(screen, grid)
     draw_statistic(STATISTICS)
 
@@ -550,13 +594,14 @@ pygame.display.set_icon(icon)
 level_select = Menu()
 music_select = Menu()
 if __name__ == "__main__":
-    while 1:
+    run = True
+    while run:
         screen.blit(START_SCREEB_IMG, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
             if event.type == pygame.KEYUP:
-                while 1:
+                menu_flag =True
+                while menu_flag:
                     menu()
-
         pygame.display.flip()

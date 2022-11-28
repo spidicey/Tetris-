@@ -13,4 +13,5 @@ ROTATION_SFX = Sound('Sound_effect/rotation sfx.wav')
 GAME_OVER_SFX = Sound('Sound_effect/Game Over.mp3')
 SAMPLE_SFX = Sound('Sound_effect/sfx_point.wav')
 TETRIS_ST = Sound('Sound_effect/Tetris!.mp3')
+NEXT_LEVEL = Sound('Sound_effect/1-02 - Level Up!.mp3')
 
