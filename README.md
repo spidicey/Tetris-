@@ -2,8 +2,8 @@
 # Đồ án môn Lập trình với Python, đề tài: Game TETRIS
 
 ## Mô tả
-- Đây là một đồ án game mini tên là Tetris được viết thuần python (phiên bản 3.10.2).
-- Thư viện hỗ trợ để hoàn thành đồ án là pygame - một thư viện nổi tiếng của python để phát triển game.
+- Đây là một đồ án game mini tên là Tetris được viết bằng python 
+- Dùng pygame 
 - Viết và quản lý bỏi Pycharm
 ## Yêu cầu 
 - Cài đặt Pygame
